@@ -1,4 +1,4 @@
-// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 using System;
 using System.Collections.Generic;
@@ -15,14 +15,8 @@ namespace PartialResponse.Core
     public class Tokenizer
     {
         private readonly TextReader source;
+        private readonly IReadOnlyDictionary<char, TokenType> tokensMap;
         private readonly StringBuilder buffer = new StringBuilder();
-        private readonly Dictionary<char, TokenType> tokens = new Dictionary<char, TokenType>()
-        {
-            ['/'] = TokenType.ForwardSlash,
-            ['('] = TokenType.LeftParenthesis,
-            [')'] = TokenType.RightParenthesis,
-            [','] = TokenType.Comma
-        };
 
         private int position = -1;
 
@@ -30,14 +24,21 @@ namespace PartialResponse.Core
         /// Initializes a new instance of the <see cref="Tokenizer"/> class.
         /// </summary>
         /// <param name="source">A <see cref="TextReader"/> representing the input string.</param>
-        public Tokenizer(TextReader source)
+        /// <param name="tokensMap">A map of non-identifier tokens to their character representations.</param>
+        public Tokenizer(TextReader source, IReadOnlyDictionary<char, TokenType> tokensMap)
         {
             if (source == null)
             {
                 throw new ArgumentNullException(nameof(source));
             }
 
+            if (tokensMap == null)
+            {
+                throw new ArgumentNullException(nameof(tokensMap));
+            }
+
             this.source = source;
+            this.tokensMap = tokensMap;
         }
 
         /// <summary>
@@ -51,28 +52,31 @@ namespace PartialResponse.Core
                 return new Token(null, TokenType.Eof, this.position);
             }
 
-            Token token;
+            var c = this.GetCurrentCharacter();
 
-            TokenType tokenType;
-
-            if (this.tokens.TryGetValue(this.GetCurrentCharacter(), out tokenType))
+            if (this.tokensMap.TryGetValue(c, out var tokenType))
             {
                 this.TakeCharacter();
 
-                token = new Token(this.buffer.ToString(), tokenType, this.position);
+                return this.CreateToken(tokenType);
             }
-            else if (this.IsWhiteSpace(this.GetCurrentCharacter()))
+            else if (char.IsWhiteSpace(this.GetCurrentCharacter()))
             {
-                this.TakeCharactersWhile(character => this.IsWhiteSpace(character));
+                this.TakeCharactersWhile(character => char.IsWhiteSpace(character));
 
-                token = new Token(this.buffer.ToString(), TokenType.WhiteSpace, this.position);
+                return this.CreateToken(TokenType.WhiteSpace);
             }
             else
             {
-                this.TakeCharactersWhile(character => !this.tokens.ContainsKey(character) && !this.IsWhiteSpace(character));
+                this.TakeCharactersWhile(character => !this.tokensMap.ContainsKey(character) && !char.IsWhiteSpace(character));
 
-                token = new Token(this.buffer.ToString(), TokenType.Identifier, this.position);
+                return this.CreateToken(TokenType.Identifier);
             }
+        }
+
+        private Token CreateToken(TokenType tokenType)
+        {
+            var token = new Token(this.buffer.ToString(), tokenType, this.position);
 
             this.buffer.Clear();
 
@@ -94,15 +98,6 @@ namespace PartialResponse.Core
             this.source.Read();
 
             this.position++;
-        }
-
-        private bool IsWhiteSpace(char character)
-        {
-            return
-                character == ' ' ||
-                character == '\t' ||
-                character == '\r' ||
-                character == '\n';
         }
 
         private char GetCurrentCharacter()

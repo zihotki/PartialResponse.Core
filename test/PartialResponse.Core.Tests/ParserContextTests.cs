@@ -1,4 +1,4 @@
-﻿// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+﻿// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 using System;
 using System.IO;
@@ -15,7 +15,17 @@ namespace PartialResponse.Core.Tests
             TextReader source = null;
 
             // Act
-            Assert.Throws<ArgumentNullException>(() => new ParserContext(source));
+            Assert.Throws<ArgumentNullException>(() => new ParserContext(source, DelimiterOptions.DefaultOptions));
+        }
+
+        [Fact]
+        public void TheConstructorShouldThrowIfDelimiterOptionsIsNull()
+        {
+            // Arrange
+            DelimiterOptions options = null;
+
+            // Act
+            Assert.Throws<ArgumentNullException>(() => new ParserContext(new StringReader(string.Empty), options));
         }
     }
 }

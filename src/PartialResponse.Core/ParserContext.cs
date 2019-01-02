@@ -1,4 +1,4 @@
-// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 using System;
 using System.Collections.Generic;
@@ -17,14 +17,21 @@ namespace PartialResponse.Core
         /// Initializes a new instance of the <see cref="ParserContext"/> class.
         /// </summary>
         /// <param name="source">A <see cref="TextReader"/> representing the input string.</param>
-        public ParserContext(TextReader source)
+        /// <param name="options">Delimiters options for parser.</param>
+        public ParserContext(TextReader source, DelimiterOptions options)
         {
             if (source == null)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
             }
 
             this.Source = source;
+            this.Options = options;
             this.Values = new List<Field>();
         }
 
@@ -38,12 +45,17 @@ namespace PartialResponse.Core
         /// Gets the <see cref="TextReader"/> representing the input string.
         /// </summary>
         /// <returns>The <see cref="TextReader"/> representing the input string.</returns>
-        public TextReader Source { get; private set; }
+        public TextReader Source { get; }
 
         /// <summary>
         /// Gets the values that are extracted while parsing.
         /// </summary>
         /// <returns>The values that are extracted while parsing.</returns>
-        public List<Field> Values { get; private set; }
+        public List<Field> Values { get; }
+
+        /// <summary>
+        /// Gets delimiters options.
+        /// </summary>
+        public DelimiterOptions Options { get; }
     }
 }

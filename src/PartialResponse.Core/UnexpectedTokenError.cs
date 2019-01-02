@@ -1,4 +1,4 @@
-// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 namespace PartialResponse.Core
 {

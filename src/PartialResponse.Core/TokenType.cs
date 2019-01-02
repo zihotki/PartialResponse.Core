@@ -1,4 +1,4 @@
-// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 namespace PartialResponse.Core
 {
@@ -17,24 +17,24 @@ namespace PartialResponse.Core
         Identifier,
 
         /// <summary>
-        /// A forward slash ('/') delimiter.
+        /// A nested field delimiter, for example - forward slash ('/').
         /// </summary>
-        ForwardSlash,
+        NestedFieldDelimiter,
 
         /// <summary>
-        /// An opening parenthesis ('(').
+        /// A nested field group start delimiter, for example - opening parenthesis ('(').
         /// </summary>
-        LeftParenthesis,
+        FieldGroupStartDelimiter,
 
         /// <summary>
-        /// A closing parenthesis (')').
+        /// A nested field group end delimiter, for example - closing parenthesis (')').
         /// </summary>
-        RightParenthesis,
+        FieldGroupEndDelimiter,
 
         /// <summary>
-        /// A comma (',') delimiter.
+        /// A fields delimiter, for example - comma (',').
         /// </summary>
-        Comma,
+        FieldsDelimiter,
 
         /// <summary>
         /// A space, horizontal tab, new line, or carriage return. Typically, a contiguous run of whitespace is a

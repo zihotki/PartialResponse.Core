@@ -1,4 +1,4 @@
-// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 using System;
 using System.IO;
@@ -11,122 +11,82 @@ namespace PartialResponse.Core.Tests
         [Fact]
         public void TheConstructorShouldThrowIfReaderIsNull()
         {
-            // Arrange
-            TextReader reader = null;
-
             // Act
-            Assert.Throws<ArgumentNullException>("source", () => new Tokenizer(reader));
+            Assert.Throws<ArgumentNullException>("source", () => new Tokenizer(null, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap));
         }
 
         [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeForwardSlash()
+        public void TheConstructorShouldThrowIfDelimiterMapIsNull()
+        {
+            // Act
+            Assert.Throws<ArgumentNullException>("tokensMap", () => new Tokenizer(new StringReader(string.Empty), null));
+        }
+
+        [Theory]
+        [InlineData("/")]
+        [InlineData(".")]
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueNestedFieldDelimiter(string data)
         {
             // Arrange
-            var reader = new StringReader("/");
-            var tokenizer = new Tokenizer(reader);
+            var reader = new StringReader(data);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             // Act
             var token = tokenizer.NextToken();
 
             // Assert
-            Assert.Equal(TokenType.ForwardSlash, token.Type);
+            Assert.Equal(TokenType.NestedFieldDelimiter, token.Type);
+            Assert.Equal(data, token.Value);
         }
 
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueForwardSlash()
+        [Theory]
+        [InlineData("(")]
+        [InlineData("[")]
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueStartGroupDelimiter(string data)
         {
             // Arrange
-            var reader = new StringReader("/");
-            var tokenizer = new Tokenizer(reader);
+            var reader = new StringReader(data);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             // Act
             var token = tokenizer.NextToken();
 
             // Assert
-            Assert.Equal("/", token.Value);
+            Assert.Equal(TokenType.FieldGroupStartDelimiter, token.Type);
+
+            Assert.Equal(data, token.Value);
         }
 
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeLeftParenthesis()
+        [Theory]
+        [InlineData(")")]
+        [InlineData("]")]
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueEndGroupDelimiter(string data)
         {
             // Arrange
-            var reader = new StringReader("(");
-            var tokenizer = new Tokenizer(reader);
+            var reader = new StringReader(data);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             // Act
             var token = tokenizer.NextToken();
 
             // Assert
-            Assert.Equal(TokenType.LeftParenthesis, token.Type);
+            Assert.Equal(TokenType.FieldGroupEndDelimiter, token.Type);
+
+            Assert.Equal(data, token.Value);
         }
 
         [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueLeftParenthesis()
-        {
-            // Arrange
-            var reader = new StringReader("(");
-            var tokenizer = new Tokenizer(reader);
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
-            Assert.Equal("(", token.Value);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeRightParenthesis()
-        {
-            // Arrange
-            var reader = new StringReader(")");
-            var tokenizer = new Tokenizer(reader);
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
-            Assert.Equal(TokenType.RightParenthesis, token.Type);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueRightParenthesis()
-        {
-            // Arrange
-            var reader = new StringReader(")");
-            var tokenizer = new Tokenizer(reader);
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
-            Assert.Equal(")", token.Value);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeComma()
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueFieldsDelimiter()
         {
             // Arrange
             var reader = new StringReader(",");
-            var tokenizer = new Tokenizer(reader);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             // Act
             var token = tokenizer.NextToken();
 
             // Assert
-            Assert.Equal(TokenType.Comma, token.Type);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueComma()
-        {
-            // Arrange
-            var reader = new StringReader(",");
-            var tokenizer = new Tokenizer(reader);
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
+            Assert.Equal(TokenType.FieldsDelimiter, token.Type);
             Assert.Equal(",", token.Value);
         }
 
@@ -135,62 +95,32 @@ namespace PartialResponse.Core.Tests
         [InlineData("\t")]
         [InlineData("\r")]
         [InlineData("\n")]
-        public void TheNextTokenMethodShouldReturnTokenTypeWhiteSpace(string value)
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueWhiteSpace(string value)
         {
             // Arrange
             var reader = new StringReader(value);
-            var tokenizer = new Tokenizer(reader);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             // Act
             var token = tokenizer.NextToken();
 
             // Assert
             Assert.Equal(TokenType.WhiteSpace, token.Type);
-        }
-
-        [Theory]
-        [InlineData(" ")]
-        [InlineData("\t")]
-        [InlineData("\r")]
-        [InlineData("\n")]
-        public void TheNextTokenMethodShouldReturnTokenValueWhiteSpace(string value)
-        {
-            // Arrange
-            var reader = new StringReader(value);
-            var tokenizer = new Tokenizer(reader);
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
             Assert.Equal(value, token.Value);
         }
 
         [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeIdentifier()
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueIdentifier()
         {
             // Arrange
             var reader = new StringReader("foo");
-            var tokenizer = new Tokenizer(reader);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             // Act
             var token = tokenizer.NextToken();
 
             // Assert
             Assert.Equal(TokenType.Identifier, token.Type);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueIdentifier()
-        {
-            // Arrange
-            var reader = new StringReader("foo");
-            var tokenizer = new Tokenizer(reader);
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
             Assert.Equal("foo", token.Value);
         }
 
@@ -199,7 +129,7 @@ namespace PartialResponse.Core.Tests
         {
             // Arrange
             var reader = new StringReader("foo");
-            var tokenizer = new Tokenizer(reader);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             tokenizer.NextToken();
 
@@ -211,55 +141,28 @@ namespace PartialResponse.Core.Tests
         }
 
         [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueIdentifierBeforeForwardSlash()
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueIdentifierBeforeForwardSlash()
         {
             // Arrange
             var reader = new StringReader("foo/");
-            var tokenizer = new Tokenizer(reader);
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
-            Assert.Equal("foo", token.Value);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeIdentifierBeforeForwardSlash()
-        {
-            // Arrange
-            var reader = new StringReader("foo/");
-            var tokenizer = new Tokenizer(reader);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             // Act
             var token = tokenizer.NextToken();
 
             // Assert
             Assert.Equal(TokenType.Identifier, token.Type);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueIdentifierAfterForwardSlash()
-        {
-            // Arrange
-            var reader = new StringReader("/foo");
-            var tokenizer = new Tokenizer(reader);
-
-            tokenizer.NextToken();
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
             Assert.Equal("foo", token.Value);
         }
 
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeIdentifierAfterForwardSlash()
+        [Theory]
+        [InlineData("/")]
+        [InlineData(".")]
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueIdentifierAfterNestedFieldDelimiter(string delimiter)
         {
             // Arrange
-            var reader = new StringReader("/foo");
-            var tokenizer = new Tokenizer(reader);
+            var reader = new StringReader($"{delimiter}foo");
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             tokenizer.NextToken();
 
@@ -268,58 +171,30 @@ namespace PartialResponse.Core.Tests
 
             // Assert
             Assert.Equal(TokenType.Identifier, token.Type);
+            Assert.Equal("foo", token.Value);
         }
 
         [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueIdentifierBeforeWhiteSpace()
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueIdentifierBeforeWhiteSpace()
         {
             // Arrange
             var reader = new StringReader("foo ");
-            var tokenizer = new Tokenizer(reader);
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
-            Assert.Equal("foo", token.Value);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeIdentifierBeforeWhiteSpace()
-        {
-            // Arrange
-            var reader = new StringReader("foo ");
-            var tokenizer = new Tokenizer(reader);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             // Act
             var token = tokenizer.NextToken();
 
             // Assert
             Assert.Equal(TokenType.Identifier, token.Type);
-        }
-
-        [Fact]
-        public void TheNextTokenMethodShouldReturnTokenValueIdentifierAfterWhiteSpace()
-        {
-            // Arrange
-            var reader = new StringReader(" foo");
-            var tokenizer = new Tokenizer(reader);
-
-            tokenizer.NextToken();
-
-            // Act
-            var token = tokenizer.NextToken();
-
-            // Assert
             Assert.Equal("foo", token.Value);
         }
 
         [Fact]
-        public void TheNextTokenMethodShouldReturnTokenTypeIdentifierAfterWhiteSpace()
+        public void TheNextTokenMethodShouldReturnTokenTypeAndValueIdentifierAfterWhiteSpace()
         {
             // Arrange
             var reader = new StringReader(" foo");
-            var tokenizer = new Tokenizer(reader);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             tokenizer.NextToken();
 
@@ -328,6 +203,7 @@ namespace PartialResponse.Core.Tests
 
             // Assert
             Assert.Equal(TokenType.Identifier, token.Type);
+            Assert.Equal("foo", token.Value);
         }
 
         [Fact]
@@ -335,7 +211,7 @@ namespace PartialResponse.Core.Tests
         {
             // Arrange
             var reader = new StringReader("foo/");
-            var tokenizer = new Tokenizer(reader);
+            var tokenizer = new Tokenizer(reader, DelimiterOptions.DefaultOptions.DelimiterToTokenTypeMap);
 
             tokenizer.NextToken();
 

@@ -1,6 +1,7 @@
-// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 using System;
+using System.Linq;
 
 namespace PartialResponse.Core
 {
@@ -16,15 +17,20 @@ namespace PartialResponse.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="Field"/> structure.
         /// </summary>
-        /// <param name="value">The value of the field.</param>
-        public Field(string value)
+        /// <param name="parts">The value of the field.</param>
+        public Field(params string[] parts)
         {
-            if (value == null)
+            if (parts == null)
             {
-                throw new ArgumentNullException(nameof(value));
+                throw new ArgumentNullException(nameof(parts));
             }
 
-            this.Parts = value.Split('/');
+            if (parts.Length == 0 || parts.Any(string.IsNullOrEmpty))
+            {
+                throw new ArgumentException("Parts cannot be empty or null", nameof(parts));
+            }
+
+            this.Parts = parts;
         }
 
         /// <summary>
@@ -76,15 +82,6 @@ namespace PartialResponse.Core
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Returns a string that represents the current object.
-        /// </summary>
-        /// <returns>A string that represents the current object.</returns>
-        public override string ToString()
-        {
-            return string.Join("/", this.Parts);
         }
     }
 }

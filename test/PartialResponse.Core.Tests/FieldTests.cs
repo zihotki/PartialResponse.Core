@@ -1,4 +1,4 @@
-// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 using System;
 using Xunit;
@@ -8,39 +8,34 @@ namespace PartialResponse.Core.Tests
     public class FieldTests
     {
         [Fact]
-        public void TheConstructorShouldThrowIfValueIsNull()
+        public void TheConstructorShouldThrowIfValuesIsNull()
         {
             // Arrange
-            string value = null;
+            string[] value = null;
 
             // Act
             Assert.Throws<ArgumentNullException>(() => new Field(value));
         }
 
         [Fact]
-        public void ThePartsPropertyShouldContainSingleValue()
+        public void TheConstructorShouldThrowIfOneOfValuesIsNull()
         {
             // Arrange
-            var value = "foo";
+            string value = null;
 
             // Act
-            var field = new Field(value);
-
-            // Assert
-            Assert.Equal(new[] { "foo" }, field.Parts);
+            Assert.Throws<ArgumentException>(() => new Field("bla", value));
         }
 
         [Fact]
-        public void ThePartsPropertyShouldContainMultipleValues()
+        public void ThePartsPropertyShouldContainSingleValue()
         {
             // Arrange
-            var value = "foo/bar";
-
             // Act
-            var field = new Field(value);
+            var field = new Field("foo");
 
             // Assert
-            Assert.Equal(new[] { "foo", "bar" }, field.Parts);
+            Assert.Equal(new[] { "foo" }, field.Parts);
         }
 
         [Fact]
@@ -72,7 +67,7 @@ namespace PartialResponse.Core.Tests
         public void TheMatchesMethodShouldReturnFalseForDifferentNestedValues()
         {
             // Arrange
-            var field = new Field("foo/bar");
+            var field = new Field("foo", "bar");
 
             // Act
             var result = field.Matches(new[] { "foo", "baz" });
@@ -111,7 +106,7 @@ namespace PartialResponse.Core.Tests
         public void TheMatchesMethodShouldReturnTrueForOtherSuffixValue()
         {
             // Arrange
-            var field = new Field("foo/bar");
+            var field = new Field("foo", "bar");
 
             // Act
             var result = field.Matches(new[] { "foo" });
@@ -144,20 +139,6 @@ namespace PartialResponse.Core.Tests
 
             // Assert
             Assert.True(result);
-        }
-
-        [Fact]
-        public void TheToStringMethodShouldReturnValue()
-        {
-            // Arrange
-            var value = "foo/bar";
-            var field = new Field(value);
-
-            // Act
-            var result = field.Matches(new[] { "foo" });
-
-            // Assert
-            Assert.Equal(value, field.ToString());
         }
     }
 }

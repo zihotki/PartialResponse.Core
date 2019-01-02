@@ -1,7 +1,8 @@
-// Copyright (c) Arjen Post. See LICENSE in the project root for license information.
+// Copyright (c) Arjen Post and contributors. See LICENSE in the project root for license information.
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PartialResponse.Core
 {
@@ -12,7 +13,7 @@ namespace PartialResponse.Core
     /// from your code.</remarks>
     public class Parser
     {
-        private readonly Stack<string> prefixes = new Stack<string>();
+        private readonly Stack<List<string>> prefixes = new Stack<List<string>>();
         private readonly Dictionary<TokenType, Action> handlers;
         private readonly ParserContext context;
         private readonly Tokenizer tokenizer;
@@ -34,13 +35,14 @@ namespace PartialResponse.Core
 
             this.context = context;
 
-            this.tokenizer = new Tokenizer(context.Source);
+            this.tokenizer = new Tokenizer(context.Source, context.Options.DelimiterToTokenTypeMap);
+
             this.handlers = new Dictionary<TokenType, Action>
             {
-                { TokenType.ForwardSlash, this.HandleForwardSlash },
-                { TokenType.LeftParenthesis, this.HandleLeftParenthesis },
-                { TokenType.RightParenthesis, this.HandleRightParenthesis },
-                { TokenType.Comma, this.HandleComma },
+                { TokenType.NestedFieldDelimiter, this.HandleNestedFieldDelimiter },
+                { TokenType.FieldGroupStartDelimiter, this.HandleFieldGroupStartDelimiter },
+                { TokenType.FieldGroupEndDelimiter, this.HandleFieldGroupEndDelimiter },
+                { TokenType.FieldsDelimiter, this.HandleFieldsDelimiter },
                 { TokenType.Eof, this.HandleEof }
             };
         }
@@ -78,26 +80,26 @@ namespace PartialResponse.Core
                 return;
             }
 
-            string prefix;
+            List<string> prefixes;
 
             if (this.prefixes.Count > 0)
             {
-                var previousPrefix = this.depth > 0 && this.previousToken.Type != TokenType.ForwardSlash ? this.prefixes.Peek() : this.prefixes.Pop();
+                prefixes = this.depth > 0 && this.previousToken.Type != TokenType.NestedFieldDelimiter
+                    ? this.prefixes.Peek().ToList() // creating a copy of existing prefixes when we are diving deep
+                    : this.prefixes.Pop();
 
-                prefix = $"{previousPrefix}/{this.currentToken.Value}";
+                prefixes.Add(this.currentToken.Value);
             }
             else
             {
-                prefix = this.currentToken.Value;
+                prefixes = new List<string> { this.currentToken.Value };
             }
 
-            this.prefixes.Push(prefix);
+            this.prefixes.Push(prefixes);
 
             this.NextToken();
 
-            Action handler;
-
-            if (!this.handlers.TryGetValue(this.currentToken.Type, out handler))
+            if (!this.handlers.TryGetValue(this.currentToken.Type, out var handler))
             {
                 this.context.Error = new UnexpectedTokenError(this.currentToken);
 
@@ -107,13 +109,13 @@ namespace PartialResponse.Core
             handler();
         }
 
-        private void HandleForwardSlash()
+        private void HandleNestedFieldDelimiter()
         {
             this.NextToken();
             this.HandleIdentifier(acceptEnd: false);
         }
 
-        private void HandleLeftParenthesis()
+        private void HandleFieldGroupStartDelimiter()
         {
             this.depth++;
 
@@ -121,7 +123,7 @@ namespace PartialResponse.Core
             this.HandleIdentifier(acceptEnd: false);
         }
 
-        private void HandleRightParenthesis()
+        private void HandleFieldGroupEndDelimiter()
         {
             do
             {
@@ -129,7 +131,7 @@ namespace PartialResponse.Core
 
                 if (this.previousToken.Type == TokenType.Identifier)
                 {
-                    this.context.Values.Add(new Field(value));
+                    this.context.Values.Add(new Field(value.ToArray()));
                 }
 
                 this.depth--;
@@ -143,11 +145,11 @@ namespace PartialResponse.Core
 
                 this.NextToken();
             }
-            while (this.currentToken.Type == TokenType.RightParenthesis);
+            while (this.currentToken.Type == TokenType.FieldGroupEndDelimiter);
 
             if (this.currentToken.Type != TokenType.Eof)
             {
-                if (this.currentToken.Type != TokenType.Comma)
+                if (this.currentToken.Type != TokenType.FieldsDelimiter)
                 {
                     this.context.Error = new UnexpectedTokenError(this.currentToken);
 
@@ -161,11 +163,11 @@ namespace PartialResponse.Core
             }
         }
 
-        private void HandleComma()
+        private void HandleFieldsDelimiter()
         {
             var value = this.prefixes.Pop();
 
-            this.context.Values.Add(new Field(value));
+            this.context.Values.Add(new Field(value.ToArray()));
 
             this.NextToken();
             this.HandleIdentifier(acceptEnd: false);
@@ -182,7 +184,7 @@ namespace PartialResponse.Core
 
             var value = this.prefixes.Pop();
 
-            this.context.Values.Add(new Field(value));
+            this.context.Values.Add(new Field(value.ToArray()));
         }
 
         private void NextToken()
