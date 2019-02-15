@@ -54,16 +54,16 @@ namespace PartialResponse.Core
         /// <summary>
         /// Gets default options for parser. Default options are:
         ///   field delimiters - ','
-        ///   nested field delimiters - '/', '.'
-        ///   field group start delimiters - '(', '['
-        ///   field group end delimiters - ')', ']'
+        ///   nested field delimiters - '/'
+        ///   field group start delimiters - '('
+        ///   field group end delimiters - ')'
         /// </summary>
         public static DelimiterOptions DefaultOptions
         {
             get
             {
                 return defaultOptions
-                    ?? (defaultOptions = new DelimiterOptions(new[] { ',' }, new[] { '/', '.' }, new[] { '(', '[' }, new[] { ')', ']' }));
+                    ?? (defaultOptions = new DelimiterOptions(new[] { ',' }, new[] { '/' }, new[] { '(' }, new[] { ')' }));
             }
         }
 

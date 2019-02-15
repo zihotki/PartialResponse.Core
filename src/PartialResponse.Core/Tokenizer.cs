@@ -52,9 +52,7 @@ namespace PartialResponse.Core
                 return new Token(null, TokenType.Eof, this.position);
             }
 
-            var c = this.GetCurrentCharacter();
-
-            if (this.tokensMap.TryGetValue(c, out var tokenType))
+            if (this.tokensMap.TryGetValue(this.GetCurrentCharacter(), out var tokenType))
             {
                 this.TakeCharacter();
 

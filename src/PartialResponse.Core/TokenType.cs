@@ -22,12 +22,12 @@ namespace PartialResponse.Core
         NestedFieldDelimiter,
 
         /// <summary>
-        /// A nested field group start delimiter, for example - opening parenthesis ('(').
+        /// A field group start delimiter, for example - opening parenthesis ('(').
         /// </summary>
         FieldGroupStartDelimiter,
 
         /// <summary>
-        /// A nested field group end delimiter, for example - closing parenthesis (')').
+        /// A field group end delimiter, for example - closing parenthesis (')').
         /// </summary>
         FieldGroupEndDelimiter,
 
